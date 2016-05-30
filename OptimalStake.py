@@ -1,5 +1,5 @@
 
-#imports the required library for the script
+#imports the required python packages for the script - you may need to download and install these into python
 from openpyxl import load_workbook;
 import scipy.stats
 
@@ -17,8 +17,8 @@ data = []
 for col in ws.columns[0]:
     data.append(col.value)
 
-#sigtime tells me what percentile of the distribution a goal is scored in the ten minutes preceding a goal
-#(versus all the times to next goal). We will want to know this in order to deduce our optimal bet size for each bet,
+#sigtime tells me what percentile of the distribution a second goal is scored in the ten minutes after a first goal is scored
+#(versus all the possible times for the second goal). We will want to know this in order to deduce our optimal bet size for each bet,
 #as the starting point will be for example 'I am willing to lose half my total account value in a tail risk scenario with an expected 
 #frequency of 5%, where 4 consecutive bets go against me'. 
 
