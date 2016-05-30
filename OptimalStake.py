@@ -10,7 +10,7 @@ import scipy.stats
 wb = load_workbook(filename = '/Users/Josh/Python_test.xlsx')
 ws = wb['Data']
 
-#creates a python list from a column in excel
+#creates a python list called 'data' from a column in excel
 
 data = []
 
