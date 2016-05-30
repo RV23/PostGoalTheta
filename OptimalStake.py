@@ -5,7 +5,8 @@ import scipy.stats
 
 
 #loads the correct excel workbook and sheet (Currently a spreadsheet with random values between 0 and 60 in column A of 'Data tab)
-#need to replace this with actual football game data showing the average time a goal is scored after another goal
+#need to replace this with actual football game data showing the average time a goal is scored after another goal. 
+#You can create a similar spreadsheet and replace the path for this to work for you.
 
 wb = load_workbook(filename = '/Users/Josh/Python_test.xlsx')
 ws = wb['Data']
