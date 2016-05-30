@@ -17,7 +17,10 @@ data = []
 for col in ws.columns[0]:
     data.append(col.value)
 
-#sigtime tells me what percentage of the time a goal is scored in the ten minutes preceding a goal
+#sigtime tells me what percentile of the distribution a goal is scored in the ten minutes preceding a goal
+#(versus all the times to next goal). We will want to know this in order to deduce our optimal bet size for each bet,
+#as the starting point will be for example 'I am willing to lose half my total account value in a tail risk scenario with an expected 
+#frequency of 5%, where 4 consecutive bets go against me'. 
 
 sigtime = scipy.stats.percentileofscore(data,10)
 print(sigtime)
