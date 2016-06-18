@@ -1,20 +1,33 @@
 from betfair.api_ng import API
 import  json
 
-username='PUTUSERNAMEHERE'
+
+
+#Login details
+
+username='jbrozzle'
 url = 'https://identitysso.betfair.com/api/certlogin'
-Appkey = 'PUT_APPKEY_ASSOCIATED_WITH_USERNAME_HERE'
-data='username=PUTUSERNAMEHERE&password=PUTPASSWORDHERE'
+Appkey = 'XDqXKWsq3yNc060v'
+data='username=jbrozzle&password=heriots02'
 import requests
 
 
+#Datetime library to ensure we're only loading today's matches
 
 from datetime import datetime, timedelta
 tomorrow = datetime.now().date() + timedelta(days=1)
+today = datetime.now().date()
+
 print(tomorrow)
 
 
-NewSession = API(aus='False',username=username,use_ssl_cert='True',locale='')
+#Excel Session for todays matches
+from openpyxl import Workbook
+wb = Workbook()
+
+
+
+NewSession = API(aus='False',username='jbrozzle',use_ssl_cert='True',locale='')
 NewSession.load_ssl_cert_paths(username=username)
 print(NewSession.cert_paths)
 NewSession.send_http_request(url,data=data)
@@ -84,7 +97,13 @@ print(matches)
 #Calculate number of "Liquid Games" today
 number_of_games = len(liquidIds)
 
+
+#i is the iterable indicating which position of the liquid games we are in
 i=-1
+#j is the games with valid, liquid Over/Under markets
+j=-1
+
+
 #Get correct MarketIds for Over/Under x goals for today's games by calling all markets (eg team a wins by 1, over/under 2.5 goals, draw etc.)
 for x in liquidIds:
     i=i+1
@@ -104,7 +123,9 @@ for x in liquidIds:
 
 
     #totalMatched = x['totalMatched']
+    # k is the number of available, liquid of Over/Under markets in a single match
 
+    k=-1
     for x in marketnames1:
 
         marketid = x['marketId']
@@ -114,20 +135,54 @@ for x in liquidIds:
         #populate lists with valid markets
 
         if market[:3] == 'Ove' and totalMatched>100:
-
+            k = k+1
             activemarketId.append(marketid)
             activeMarkets.append(market)
             activetotal.append(totalMatched)
 
-    if activemarketId != []:
+    #Add the game to a new sheet in the workbook we are building with today's matches
 
+    if activemarketId != []:
+        j = j+1
         print(i)
         print(matchname)
         print(activemarketId)
         print(activeMarkets)
         print(activetotal)
 
+        #Create worksheet and call it the match number
+        ws = wb.create_sheet()
+        ws.title = 'match_number'+str(j)
 
+        #Create headers for the columns and add the matchname into cell a2
+        ws.cell(row = 1, column= 1).value = 'Match Name'
+        ws.cell(row = 1, column= 2).value = 'Market Name'
+        ws.cell(row = 1, column= 3).value = 'Market Id'
+        ws.cell(row = 1, column= 4).value = 'Total Matched'
+        ws.cell(row=2,column = 1).value = matchname
+
+        #Paste all the values in each list into the correct column in the worksheet
+        r=1
+        for x in activeMarkets:
+            r=r+1
+            ws.cell(row=r,column=2).value = x
+
+        r = 1
+        for x in activemarketId:
+            r = r + 1
+            ws.cell(row=r, column=3).value = x
+
+        r = 1
+        for x in activetotal:
+            r = r + 1
+            ws.cell(row=r, column=4).value = x
+
+
+#Save the workbook with today's date. I am saving it in a folder I have named "Daily data"
+
+StringDate = today.strftime('%d%m%Y')
+Workbookname = '/Users/Josh/PycharmProjects/PGT_v3/DailyData/MarketIds@'+ StringDate+'.xlsx'
+wb.save(filename=Workbookname)
 
 
 
