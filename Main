@@ -1,0 +1,133 @@
+from betfair.api_ng import API
+import  json
+
+username='PUTUSERNAMEHERE'
+url = 'https://identitysso.betfair.com/api/certlogin'
+Appkey = 'PUT_APPKEY_ASSOCIATED_WITH_USERNAME_HERE'
+data='username=PUTUSERNAMEHERE&password=PUTPASSWORDHERE'
+import requests
+
+
+
+from datetime import datetime, timedelta
+tomorrow = datetime.now().date() + timedelta(days=1)
+print(tomorrow)
+
+
+NewSession = API(aus='False',username=username,use_ssl_cert='True',locale='')
+NewSession.load_ssl_cert_paths(username=username)
+print(NewSession.cert_paths)
+NewSession.send_http_request(url,data=data)
+
+headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Length': str(len(data)),
+    'X-Authentication': NewSession.session_token,
+    'Connection': 'Keep-Alive',
+    'Accept-Encoding': 'gzip',
+    'X-Application': 'XDqXKWsq3yNc060v'
+}
+
+headers['X-Application']=Appkey
+
+resp = NewSession.requests.post(url, data= data, cert = NewSession.cert_paths,headers = headers)
+
+print(NewSession.session_token)
+if resp.status_code==200:
+
+    print(resp.json())
+
+
+#Get account funds
+account_url = "https://api.betfair.com/exchange/account/json-rpc/v1/"
+req = '{"jsonrpc": "2.0", "method": "AccountAPING/v1.0/getAccountFunds"}'
+response = requests.post(account_url, data=req, headers=headers)
+accountFunds = response.json()
+print(accountFunds)
+
+
+#Get today's games market ids
+event_url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
+req = '{"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listEvents", "params": {"filter":{"eventTypeIds":["1"]},"marketStartTime":{"from":"2016-06-13T00:30:00Z","to":"2016-06-13T22:30:00Z"}}, "id": 1}'
+response = requests.get(event_url, data=req, headers=headers)
+Games = []
+
+Games = response.json()
+
+#Getting usable list from the Json response
+print('1')
+print(Games)
+results = Games['result']
+print("2")
+print(results)
+liquidResults = []
+for idx, val in enumerate(results):
+    #print(idx, val)
+    if val['marketCount']>10:
+        liquidResults.append(val['event'])
+
+#liquidIds returns just the list of eventIds with a marketCount > 10 that are occuring today
+liquidIds = []
+matches = []
+for idx, val in enumerate(liquidResults):
+    if datetime.strptime(val['openDate'][:10], "%Y-%m-%d").date() < tomorrow:
+   # if datetime.strptime(val['openDate'], '%Y-%b-%d') < tomorrow:
+        liquidIds.append(val['id'])
+        matches.append(val['name'])
+
+print('3')
+print(liquidIds)
+print('4')
+print(matches)
+
+#Calculate number of "Liquid Games" today
+number_of_games = len(liquidIds)
+
+i=-1
+#Get correct MarketIds for Over/Under x goals for today's games by calling all markets (eg team a wins by 1, over/under 2.5 goals, draw etc.)
+for x in liquidIds:
+    i=i+1
+    matchname=matches[i]
+    event_url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
+    req = '{"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listMarketCatalogue", "params": {"filter":{"eventIds":["' + x + '"] }, "maxResults":"20"}, "id":1}'
+    response = requests.get(event_url, data=req, headers=headers)
+    MarketIds = []
+    MarketIds = response.json()
+    marketnames1 = (MarketIds['result'])
+
+    #create lists for the variables we need
+
+    activemarketId = []
+    activeMarkets=[]
+    activetotal=[]
+
+
+    #totalMatched = x['totalMatched']
+
+    for x in marketnames1:
+
+        marketid = x['marketId']
+        market = x['marketName']
+        totalMatched = x['totalMatched']
+
+        #populate lists with valid markets
+
+        if market[:3] == 'Ove' and totalMatched>100:
+
+            activemarketId.append(marketid)
+            activeMarkets.append(market)
+            activetotal.append(totalMatched)
+
+    if activemarketId != []:
+
+        print(i)
+        print(matchname)
+        print(activemarketId)
+        print(activeMarkets)
+        print(activetotal)
+
+
+
+
+
