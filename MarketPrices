@@ -1,0 +1,156 @@
+
+from openpyxl import load_workbook
+from openpyxl import Workbook
+from datetime import datetime
+import requests
+from betfair.Test_connection import NewSession
+
+#Get correct workbookname
+
+today = datetime.now().date()
+StringDate = today.strftime('%d%m%Y')
+Workbookname = '/Users/Josh/PycharmProjects/PGT_v3/DailyData/MarketIds@'+ StringDate+'.xlsx'
+wb = load_workbook(Workbookname)
+
+
+#Login data
+
+username='jbrozzle'
+url = 'https://identitysso.betfair.com/api/certlogin'
+Appkey = 'XDqXKWsq3yNc060v'
+data='username=jbrozzle&password=heriots02'
+
+#Json headers
+
+headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Length': str(len(data)),
+    'X-Authentication': NewSession.session_token,
+    'Connection': 'Keep-Alive',
+    'Accept-Encoding': 'gzip',
+    'X-Application': 'XDqXKWsq3yNc060v'
+}
+
+
+#creates a python list from a column in excel
+
+ws = wb.worksheets
+
+#FOR SUNDAY:
+'''
+loop through each worksheet and create the ID list for that worksheet. Then for each value in range(0,len(MarketIds)),
+Call the get best offers function for that specific ID. then paste the bid and offers into columns 5 and 6 to the worksheet,
+and in column 7 calculate the spread.
+
+'''
+
+for x in range(1,len(ws)):
+    #This indentation is at the individual level worksheet
+    MarketIds=[]
+    for col in ws[x].columns[2]:
+        #Here we create the list for each worksheet
+        MarketIds.append(col.value)
+    # Here we make the request loop to go through the newly created MarketId list
+    r=0
+    for y in MarketIds:
+        r = r +1
+        print(y)
+
+        event_url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
+        req = '{"jsonrpc": "2.0", "method": "SportsAPING/v1.0/listMarketBook", "params": {"marketIds":["' + y + '"] ,"priceProjection":{"priceData":["EX_BEST_OFFERS"]}}, "id":1}'
+        response = requests.get(event_url, data=req, headers=headers)
+        UnfilteredResp = []
+        UnfilteredResp = response.json()
+        FilteredResp = (UnfilteredResp['result'])
+
+        #We need to drill down the response, breaking it up into sub lists (layers). layer3 is the list that will allow us to access the prices for backing and laying
+
+        layer1 = []
+        layer2under = []
+        layer2over = []
+
+        #Here we go through the responses and pick out the best prices for each option (back/lay over/under goals)
+        #We then add the responses into the columns in the spreadsheet that we already created in the connection program.
+        
+
+        for p in FilteredResp:
+                layer1 = p['runners']
+                # layer1 has 2 components: the under x.5 goals market and the over x.5 market. The under market comes first in the list.
+
+                layer2under = layer1[0]['ex']
+                layer2over = layer1[1]['ex']
+                underLay = layer2under['availableToLay']
+                underBack = layer2under['availableToBack']
+                overLay = layer2over['availableToLay']
+                overBack = layer2over['availableToBack']
+
+
+                if underLay != []:
+                    bestUL= underLay[0]
+                    bestUL_px = 0
+                    bestUL_px = bestUL['price']
+                    bestUL_vol = bestUL['size']
+                    ws[x].cell(row=r, column=5).value = bestUL_px
+                    ws[x].cell(row=r, column=6).value = bestUL_vol
+                    print(bestUL_px)
+                    print(bestUL_vol)
+
+                if underBack!= []:
+                    bestUB = underBack[0]
+                    bestUB_px = 0
+                    bestUB_px = bestUB['price']
+                    bestUB_vol = bestUB['size']
+                    ws[x].cell(row=r, column=7).value = bestUB_px
+                    ws[x].cell(row=r, column=8).value = bestUB_vol
+                    print(bestUB_px)
+                    print(bestUB_vol)
+
+                if overLay!=[]:
+                    bestOL = overLay[0]
+                    bestOL_px = 0
+                    bestOL_px = bestOL['price']
+                    bestOL_vol=bestOL['size']
+                    ws[x].cell(row=r, column=9).value = bestOL_px
+                    ws[x].cell(row=r, column=10).value = bestOL_vol
+                    print(bestOL_px)
+                    print(bestOL_vol)
+
+                if overBack!=[]:
+                    bestOB = overBack[0]
+                    bestOB_px = 0
+                    bestOB_px = bestOB['price']
+                    bestOB_vol=bestOB['size']
+                    ws[x].cell(row=r, column=11).value = bestOB_px
+                    ws[x].cell(row=r, column=12).value = bestOB_vol
+
+                try:
+                    bestUL_px and bestUB_px
+                except NameError:
+                    pass
+                else:
+                    if bestUL_px and bestUB_px != 0:
+                        ws[x].cell(row=r, column=13).value = (bestUL_px - bestUB_px)
+                    else:
+                        pass
+                try:
+                    bestOL_px and bestOB_px
+                except NameError:
+                    pass
+                else:
+                    if bestOL_px and bestOB_px != 0:
+                        ws[x].cell(row=r, column=14).value = (bestOL_px - bestOB_px)
+                    else:
+                        pass
+
+
+#Save the workbook under a new name MarketPrices & date &.xlsx
+                
+StringDate = today.strftime('%d%m%Y')
+Workbookname2 = '/Users/Josh/PycharmProjects/PGT_v3/DailyData/MarketPrices@'+ StringDate+'.xlsx'
+wb.save(filename=Workbookname2)
+
+
+
+          #  AvailableBack = FilteredResp['runners']
+          #  print(AvailableBack)
