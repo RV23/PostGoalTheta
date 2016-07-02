@@ -1,0 +1,57 @@
+						
+key model parameters:						
+the expected return, R, on the inital investment X is a function of the holding period t						
+denote the holding period t as a time period in seconds						
+for various values of t, 20 seconds, 40 seconds, etc., we need to construct the function R(t), which represents the change in betfair odds over the time period t						
+define R(t) conservatively as the difference between the offer price when we "back" it and the bid price when we lay it						
+define theta as d(R(t))/dt ; i.e the slope of the function r(t)						
+we want to estimate the slope of the function R(t) - the slope of this function defines our expected return over time period t in the outcome that the implementation of our trading strategy is successful						
+						
+hypothesis:						
+The slope of the function R(t) exhibits maximum steepness in the time period shortly after a goal has been scored in a football match. 						
+We expect that observations of empirical data will confirm that the "postgoaltheta" is abnormally large. 						
+This may be driven by stopping out of positions in the over/under markets in the short period of time immediately after a goal.						
+We do not believe that the slope of the curve reflects any fundamental effects, such as goal clustering in football matches.						
+The empirical data confirms that goal clustering is not observable in football markets - rather, goals behave more like independent events.						
+For the purposes of this analysis we treat goals as independent events.						
+						
+We believe that there is an opportunity to generate a positive alpha trading strategy by "selling theta" in the event of a goal in a football match.						
+We implement this strategy by "backing" under x.5 goals in the short period following a goal; and laying x.5 goals after a holding period t.						
+						
+Our trading strategy will generate positive expected returns if the following criteria are satsified:						
+						
+probability of success (p(t)) * expected return over time horizon t (r(t)) - probability of failure (q(t)) * expected loss given failure (l(X)) > 0						
+						
+notation:						
+define the holding period, t, as a time in seconds						
+we denote the probability of success, which is a function of the holding period t, as p(t)						
+define q(t) as the probability of failure, which is 1 - p(t)						
+the expected return over time horizon t is the theta, d(R(t))/dt						
+the expected loss given failure is a fraction of the initial investment, X, which we call l(X)						
+						
+estimation of the probability of success and, following that, the breakeven value of expected theta						
+p(t) can be estimated by using historical data and pre match odds.						
+						
+for example, given that time t0 = 35 mins; we can estimate p(t) for Arsenal vs Chelsea using historical data on times when goals have been scored.						
+						
+lets suppose t1 - t0 = 5 mins in this example; we will estimate with different values of t in other examples and generalize						
+						
+then we are computing p(300) as t is defined in seconds						
+						
+based on last season's expected number of goals per time period; between 31 and 40 mins; for Arsenal the expected number of goals was 0.45 and for Chelsea 0.34						
+for the purposes of this computation we take the average, 0.395, as the expected number of goals in this 10 min window.						
+Hence, for a 5 min window, the expected number of goals is 						0.1975
+						
+hence the probability of failure, q(300) is 0.1975						
+which implies that p(success) = p(300) = 0.8025						
+						
+assume, in this simplified example, that 90% of the capital is lost in the event of failure; hence only 10% is kept						
+						
+then we can compute the breakeven value of theta decay over 5 minutes using the information above - assume here that initial capital, X = 1						
+0.8025 *R(300)*1 - 0.1975 * 0.9*1 = 0						
+						
+R(300) is the difference between the odds at time 0 and the odds at time t = 300 seconds; as per the definition at the top of the page.						
+						
+hence we need R(300) = 0.1975*0.9/0.8025 = 					0.221495327102804	
+						
+so if we "backed" at 2.3, we would need to lay at 					2.0785046728972	or better after t = 300 seconds in order to generate positive expected return.
